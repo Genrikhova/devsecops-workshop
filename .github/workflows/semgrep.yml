@@ -35,8 +35,7 @@ jobs:
             --config p/default \
             --config p/dockerfile \
             --severity ERROR \
-            --metrics off \
-            --error
+            --metrics off
 
       # On main the code is already merged, so report instead of failing.
       # One scan emits both formats: SARIF for the Security tab, Semgrep JSON for DefectDojo

@@ -25,12 +25,38 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push api
-        run: |
-          docker build -t "$NAMESPACE/devsecops-workshop-api:$IMAGE_TAG" ./api
-          docker push "$NAMESPACE/devsecops-workshop-api:$IMAGE_TAG"
+      # ----- api -----
 
-      - name: Build and push frontend
-        run: |
-          docker build -t "$NAMESPACE/devsecops-workshop-frontend:$IMAGE_TAG" ./frontend
-          docker push "$NAMESPACE/devsecops-workshop-frontend:$IMAGE_TAG"
+      - name: Build api
+        run: docker build -t "$NAMESPACE/devsecops-workshop-api:$IMAGE_TAG" ./api
+
+      # Scans the image sitting in the local daemon. Informational only:
+      # findings are printed to the job log and never fail the build.
+      - name: Scan api image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ vars.DOCKERHUB_USERNAME }}/devsecops-workshop-api:${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Push api
+        run: docker push "$NAMESPACE/devsecops-workshop-api:$IMAGE_TAG"
+
+      # ----- frontend -----
+
+      - name: Build frontend
+        run: docker build -t "$NAMESPACE/devsecops-workshop-frontend:$IMAGE_TAG" ./frontend
+
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ vars.DOCKERHUB_USERNAME }}/devsecops-workshop-frontend:${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Push frontend
+        run: docker push "$NAMESPACE/devsecops-workshop-frontend:$IMAGE_TAG"
